@@ -1,8 +1,8 @@
 {
-  "name": "pdf-it-mcp",
-  "version": "1.2.0",
-  "mcpName": "io.github.mrslbt/pdf-it",
-  "description": "Turn Claude research output into designed PDFs. Cover page, table of contents, code blocks that hold across pages. MCP server and Claude Code skill for markdown to PDF.",
+  "name": "pdf-it-safe-mcp",
+  "version": "1.2.0-tobias.1",
+  "mcpName": "local.tobias/pdf-it-safe",
+  "description": "Tobias-local hardened fork of pdf-it: designed PDFs from markdown with raw HTML disabled, local fonts, request blocking, and restricted output paths.",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -28,20 +28,17 @@
   "homepage": "https://github.com/mrslbt/pdf-it#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mrslbt/pdf-it.git"
+    "url": "git+https://github.com/tobiaskaetker174-creator/pdf-it.git"
   },
   "bugs": {
-    "url": "https://github.com/mrslbt/pdf-it/issues"
+    "url": "https://github.com/tobiaskaetker174-creator/pdf-it/issues"
   },
   "license": "MIT",
-  "author": {
-    "name": "Marsel Bait",
-    "url": "https://marselbait.me"
-  },
+  "author": "Marsel Bait; Tobias-local security fork by Tobias Kaetker/Codex",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "pdf-it-mcp": "dist/index.js"
+    "pdf-it-safe-mcp": "dist/index.js"
   },
   "files": [
     "dist",

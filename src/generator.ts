@@ -1,7 +1,7 @@
 import puppeteer, { type Browser } from 'puppeteer-core';
 import { mkdirSync, statSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
-import { join, dirname } from 'path';
+import { join, dirname, resolve, relative, isAbsolute, extname } from 'path';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { parseMarkdown, generateTocHtml } from './markdown.js';
 import { getTemplate } from './templates/index.js';
@@ -18,6 +18,8 @@ const CHROME_PATHS = [
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
 ];
+
+const DEFAULT_OUTPUT_DIR = resolve(homedir(), 'Documents', 'pdf-it');
 
 function findChrome(): string {
   const envPath = process.env['CHROME_PATH'];
@@ -50,7 +52,7 @@ async function getBrowser(): Promise<Browser> {
       .launch({
         executablePath: findChrome(),
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        args: ['--disable-dev-shm-usage'],
       })
       .then((browser) => {
         browser.on('disconnected', () => {
@@ -78,16 +80,35 @@ export async function closeBrowser(): Promise<void> {
   }
 }
 
+function isInsideDirectory(parent: string, target: string): boolean {
+  const rel = relative(parent, target);
+  return rel === '' || (!!rel && !rel.startsWith('..') && !isAbsolute(rel));
+}
+
 function resolveOutputPath(outputPath: string | undefined, title: string | undefined): string {
+  mkdirSync(DEFAULT_OUTPUT_DIR, { recursive: true });
+
   if (outputPath) {
-    mkdirSync(dirname(outputPath), { recursive: true });
-    return outputPath;
+    if (!isAbsolute(outputPath)) {
+      throw new Error(`output_path must be absolute and stay inside ${DEFAULT_OUTPUT_DIR}`);
+    }
+
+    const resolvedOutputPath = resolve(outputPath);
+    if (!isInsideDirectory(DEFAULT_OUTPUT_DIR, resolvedOutputPath)) {
+      throw new Error(`output_path must stay inside ${DEFAULT_OUTPUT_DIR}`);
+    }
+
+    if (extname(resolvedOutputPath).toLowerCase() !== '.pdf') {
+      throw new Error('output_path must end with .pdf');
+    }
+
+    mkdirSync(dirname(resolvedOutputPath), { recursive: true });
+    return resolvedOutputPath;
   }
-  const dir = join(homedir(), 'Documents', 'pdf-it');
-  mkdirSync(dir, { recursive: true });
+
   const slug = slugify(title ?? 'document');
   const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  return join(dir, `${slug}-${ts}.pdf`);
+  return join(DEFAULT_OUTPUT_DIR, `${slug}-${ts}.pdf`);
 }
 
 const PAGE_MARGIN = {
@@ -103,9 +124,17 @@ async function renderHtmlToPdf(html: string): Promise<Uint8Array> {
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
-    // 'load' waits for window.load (images + stylesheets + fonts triggered
-    // during initial render). We then wait for document.fonts.ready as a
-    // belt-and-braces guard for @import'd webfonts.
+    await page.setJavaScriptEnabled(false);
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      const url = request.url();
+      if (url === 'about:blank' || url.startsWith('data:') || url.startsWith('blob:')) {
+        void request.continue();
+        return;
+      }
+      void request.abort('blockedbyclient');
+    });
+
     await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
     await page
       .evaluate(() => (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready)

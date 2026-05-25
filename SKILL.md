@@ -1,10 +1,18 @@
-# pdf-it
+# pdf-it-safe
 
-Convert your Claude research output into a beautifully-designed PDF — cover page, table of contents, styled body, and page-numbered footer. One command.
+Convert Claude/Codex research output into a designed PDF: cover page, table of contents, styled body, and page-numbered footer. This Tobias-local fork is hardened for safer local use.
+
+## Security profile
+
+- Raw HTML in markdown is disabled.
+- JavaScript is disabled while Chrome renders the PDF.
+- External browser requests are blocked during rendering.
+- Remote Google Fonts were removed; only local/system fonts are used.
+- PDFs can only be written inside `~/Documents/pdf-it/`.
 
 ## When to use this skill
 
-Use this skill when the user says any of the following (or close variations):
+Use this skill when the user says any of the following or close variations:
 
 - "save this as PDF"
 - "export as PDF"
@@ -18,21 +26,21 @@ Use this skill when the user says any of the following (or close variations):
 
 ## How to use
 
-This skill requires the `pdf-it-mcp` MCP server. If it is not connected, prompt the user to install and connect it first (see Setup below).
+This skill requires the local `pdf-it-safe` MCP server. If it is not connected, use the pinned local checkout at `C:\Users\Tobias\projects\pdf-it-safe`.
 
 ### Basic usage
 
 Call the `generate_pdf` tool with the content you want to convert:
 
-```
-generate_pdf({
-  content: "<markdown content>",
-  title: "<document title>",
-  author: "<author name>"
-})
+```json
+{
+  "content": "<markdown content>",
+  "title": "<document title>",
+  "author": "<author name>"
+}
 ```
 
-The PDF will be saved to `~/Documents/pdf-it/` and the path returned.
+The PDF will be saved to `~/Documents/pdf-it/` and the path returned. Custom `output_path` values must stay inside that directory.
 
 ### Parameters
 
@@ -41,13 +49,13 @@ The PDF will be saved to `~/Documents/pdf-it/` and the path returned.
 | `content` | Yes | Markdown string to convert |
 | `title` | No | Shown on cover page and footer |
 | `author` | No | Shown on cover page |
-| `output_path` | No | Custom output path (absolute) |
+| `output_path` | No | Absolute `.pdf` path inside `~/Documents/pdf-it/` |
 | `template` | No | `research-report` (default) or `plain` |
 
 ### Templates
 
-- **research-report** — Cover page with title/author/date, auto-generated table of contents from H1/H2 headings, styled body, page-numbered footer. Best for research, summaries, and reports.
-- **plain** — No cover, no TOC. Clean, dense body. Best for notes and short documents.
+- **research-report**: Cover page with title/author/date, auto-generated table of contents from H1/H2 headings, styled body, page-numbered footer. Best for research, summaries, and reports.
+- **plain**: No cover, no TOC. Clean, dense body. Best for notes and short documents.
 
 ## Behavior
 
@@ -57,19 +65,14 @@ The PDF will be saved to `~/Documents/pdf-it/` and the path returned.
 4. Return the output path to the user.
 5. Do not ask for author unless the user has mentioned their name earlier in the conversation.
 
-## Example interaction
-
-**User:** Save this as a PDF  
-**Claude:** Generating PDF with the research-report template...  
-*(calls generate_pdf)*  
-**Claude:** Done. Your PDF is at `~/Documents/pdf-it/my-research-2025-01-15T14-30-00.pdf`
-
 ## Setup
 
-### Install the MCP server
+### Local install
 
-```bash
-npm install -g pdf-it-mcp
+```powershell
+cd C:\Users\Tobias\projects\pdf-it-safe
+npm ci
+npm run build
 ```
 
 ### Add to Claude Code config
@@ -77,21 +80,9 @@ npm install -g pdf-it-mcp
 ```json
 {
   "mcpServers": {
-    "pdf-it": {
-      "command": "pdf-it-mcp"
-    }
-  }
-}
-```
-
-Or if using `npx`:
-
-```json
-{
-  "mcpServers": {
-    "pdf-it": {
-      "command": "npx",
-      "args": ["pdf-it-mcp"]
+    "pdf-it-safe": {
+      "command": "cmd.exe",
+      "args": ["/c", "C:\\Users\\Tobias\\projects\\pdf-it-safe\\scripts\\run-pdf-it-safe.cmd"]
     }
   }
 }
@@ -100,7 +91,7 @@ Or if using `npx`:
 ### Requirements
 
 - Node.js 18+
-- Google Chrome installed (used for PDF rendering — no extra download)
+- Google Chrome installed
 
 ### Custom Chrome path
 
@@ -109,8 +100,9 @@ If Chrome is in a non-standard location:
 ```json
 {
   "mcpServers": {
-    "pdf-it": {
-      "command": "pdf-it-mcp",
+    "pdf-it-safe": {
+      "command": "cmd.exe",
+      "args": ["/c", "C:\\Users\\Tobias\\projects\\pdf-it-safe\\scripts\\run-pdf-it-safe.cmd"],
       "env": {
         "CHROME_PATH": "/path/to/chrome"
       }

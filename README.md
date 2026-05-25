@@ -1,4 +1,32 @@
-# pdf-it
+# pdf-it-safe
+
+Tobias-local hardened fork of `mrslbt/pdf-it`.
+
+Do not install this checkout with `npx pdf-it-mcp@latest`. Use the pinned local build:
+
+```powershell
+cd C:\Users\Tobias\projects\pdf-it-safe
+npm ci
+npm run build
+node C:\Users\Tobias\projects\pdf-it-safe\dist\index.js
+```
+
+For Claude/Codex MCP config, use the pinned wrapper:
+
+```powershell
+C:\Users\Tobias\projects\pdf-it-safe\scripts\run-pdf-it-safe.cmd
+```
+
+Security deltas from upstream:
+
+- Raw HTML in markdown is disabled.
+- JavaScript is disabled while Chrome renders the PDF.
+- External browser requests are blocked during rendering.
+- Remote Google Fonts were removed; only local/system fonts are used.
+- PDFs can only be written inside `~/Documents/pdf-it/`.
+- Chrome is no longer launched with `--no-sandbox`.
+
+See [`TOBIAS_SECURITY.md`](./TOBIAS_SECURITY.md) for the pinned baseline and verification steps.
 
 [![pdf-it MCP server](https://glama.ai/mcp/servers/mrslbt/pdf-it/badges/score.svg)](https://glama.ai/mcp/servers/mrslbt/pdf-it)
 [![MCP Badge](https://lobehub.com/badge/mcp/mrslbt-pdf-it)](https://lobehub.com/mcp/mrslbt-pdf-it)
@@ -24,89 +52,43 @@ A 12-page sample is in [`examples/designing-ai-agent-uiux.pdf`](./examples/desig
 
 ## Works with
 
-`pdf-it` is a standard Model Context Protocol server. Any client that supports MCP locally can use it.
+`pdf-it-safe` is a local Model Context Protocol server. Any client that supports local MCP over stdio can use it, but Tobias' configured targets are Claude Code and Codex.
 
-| Client | Supported | How to add |
-|---|---|---|
-| Claude Desktop (Mac, Windows) | yes | Edit `claude_desktop_config.json` |
-| Claude Code (CLI) | yes, plus skill triggers like "save this as PDF" | `claude mcp add pdf-it -- npx -y pdf-it-mcp` |
-| Cursor | yes | Edit `~/.cursor/mcp.json` |
-| Cline (VS Code extension) | yes | Edit Cline's MCP settings |
-| Continue.dev | yes | Add via Continue's MCP config |
-| Zed | yes | Standard MCP config |
-| Goose (Block's CLI) | yes | Standard MCP config |
-| Custom agents via the Anthropic SDK | yes | Wire MCP yourself |
-| claude.ai (browser) | no | Web does not run local MCP servers |
-| Claude iOS / Android | no | Mobile does not run local MCP servers |
-
-Hard requirements on any client: Node.js 18 or newer, Google Chrome installed, the client must support MCP.
+Hard requirements on any client: Node.js 18 or newer, Google Chrome installed, the client must support local MCP.
 
 ## Install
 
-```bash
-npm install -g pdf-it-mcp
+Use this local checkout, not npm `latest`:
+
+```powershell
+cd C:\Users\Tobias\projects\pdf-it-safe
+npm ci
+npm run build
+npm test
 ```
-
-Or run on demand with `npx pdf-it-mcp`.
-
-### Requirements
-
-- Node.js 18 or newer
-- Google Chrome installed (used as the renderer, no extra download)
 
 ## Configure
 
-### Claude Desktop
+Claude and Codex are already configured on Tobias' machine to run:
 
-Edit `claude_desktop_config.json`:
+```powershell
+C:\Users\Tobias\projects\pdf-it-safe\scripts\run-pdf-it-safe.cmd
+```
+
+Generic MCP config:
 
 ```json
 {
   "mcpServers": {
-    "pdf-it": {
-      "command": "npx",
-      "args": ["-y", "pdf-it-mcp"]
+    "pdf-it-safe": {
+      "command": "cmd.exe",
+      "args": ["/c", "C:\\Users\\Tobias\\projects\\pdf-it-safe\\scripts\\run-pdf-it-safe.cmd"]
     }
   }
 }
 ```
 
-### Claude Code
-
-```bash
-claude mcp add pdf-it -- npx -y pdf-it-mcp
-```
-
-### Cursor
-
-Add to `~/.cursor/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "pdf-it": {
-      "command": "npx",
-      "args": ["-y", "pdf-it-mcp"]
-    }
-  }
-}
-```
-
-### Custom Chrome path
-
-If Chrome lives somewhere non-standard:
-
-```json
-{
-  "mcpServers": {
-    "pdf-it": {
-      "command": "npx",
-      "args": ["-y", "pdf-it-mcp"],
-      "env": { "CHROME_PATH": "/path/to/chrome" }
-    }
-  }
-}
-```
+If Chrome lives somewhere non-standard, pass `CHROME_PATH` in the MCP environment.
 
 ## Use
 
@@ -130,7 +112,7 @@ Or any of these phrasings: `export as PDF`, `make a PDF report from this`, `turn
 | `content` | yes | Markdown string to convert |
 | `title` | no | Shown on the cover and in the page footer |
 | `author` | no | Shown on the cover |
-| `output_path` | no | Absolute path for the output. Defaults to `~/Documents/pdf-it/{slug}-{timestamp}.pdf` |
+| `output_path` | no | Absolute `.pdf` path inside `~/Documents/pdf-it/`. Defaults to `~/Documents/pdf-it/{slug}-{timestamp}.pdf` |
 | `template` | no | `research-report` (default) or `plain` |
 
 ## Templates
@@ -159,19 +141,19 @@ The [examples](./examples) folder has a sample generated PDF (`designing-ai-agen
 
 ## Output
 
-By default PDFs are written to `~/Documents/pdf-it/{slug}-{timestamp}.pdf`. Pass `output_path` to override.
+By default PDFs are written to `~/Documents/pdf-it/{slug}-{timestamp}.pdf`. Pass `output_path` only for another `.pdf` path inside `~/Documents/pdf-it/`.
 
 ## Design
 
-System fonts where possible. Inter for body and headings, JetBrains Mono for code, page numbers, and metadata. Pure white paper, near-black ink, neutral hairline borders, no accent colors. Code blocks render without syntax highlighting on purpose: color choices in PDFs age badly.
+System fonts only. The renderer uses local serif, sans, and monospace stacks, pure white paper, near-black ink, neutral hairline borders, and no accent colors. Code blocks render without syntax highlighting on purpose: color choices in PDFs age badly.
 
 If you want a different design language, fork the templates and adjust. They live in `src/templates/` and are plain HTML and CSS rendered through Puppeteer.
 
 ## How it works
 
-1. **Parse:** `markdown-it` converts your markdown to HTML and auto-generates a table of contents from H1 and H2 headings.
-2. **Template:** the HTML is wrapped in templated CSS (Inter for body, JetBrains Mono for code, neutral palette).
-3. **Render:** Puppeteer launches your local Chrome in headless mode and prints the HTML to PDF with proper page-break logic.
+1. **Parse:** `markdown-it` converts your markdown to HTML with raw HTML disabled and auto-generates a table of contents from H1 and H2 headings.
+2. **Template:** the HTML is wrapped in templated CSS using local/system fonts and a neutral palette.
+3. **Render:** Puppeteer launches your local Chrome in headless mode with JavaScript disabled and browser requests blocked, then prints the HTML to PDF with proper page-break logic.
 4. **Footer:** `pdf-lib` adds a page-numbered footer programmatically, skipping cover and TOC pages.
 5. **Output:** the PDF lands in `~/Documents/pdf-it/{slug}-{timestamp}.pdf`.
 
@@ -179,13 +161,13 @@ Total time: 2-3 seconds for a 5-page document, 8-10 seconds for a 30-page docume
 
 ## Recognition
 
-Listed on [npm](https://www.npmjs.com/package/pdf-it-mcp), [Glama](https://glama.ai/mcp/servers/mrslbt/pdf-it), [LobeHub](https://lobehub.com/mcp/mrslbt-pdf-it), [mcp.so](https://mcp.so/), and [mcpmux](https://mcpmux.com/).
+Upstream `mrslbt/pdf-it` is listed on [npm](https://www.npmjs.com/package/pdf-it-mcp), [Glama](https://glama.ai/mcp/servers/mrslbt/pdf-it), [LobeHub](https://lobehub.com/mcp/mrslbt-pdf-it), [mcp.so](https://mcp.so/), and [mcpmux](https://mcpmux.com/). This fork is Tobias-local and should be run from the pinned checkout.
 
 ## Disclaimer
 
 This is an unofficial, community-built tool. It is not affiliated with, endorsed by, or sponsored by Anthropic PBC or Google LLC. Claude and Claude Code are trademarks of Anthropic PBC. Google Chrome is a trademark of Google LLC.
 
-`pdf-it` runs locally and renders PDFs through the user's installed Chrome via Puppeteer. Use at your own risk. The author accepts no liability for issues arising from misuse, prompt injection, bugs, or rendering failures.
+`pdf-it-safe` runs locally and renders PDFs through the user's installed Chrome via Puppeteer. Use at your own risk. The upstream author accepts no liability for issues arising from misuse, prompt injection, bugs, or rendering failures.
 
 ## License
 

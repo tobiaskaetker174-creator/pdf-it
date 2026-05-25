@@ -30,16 +30,16 @@ export const RESOURCES: ResourceDefinition[] = [
   },
   {
     uri: 'pdf-it://style-guide',
-    name: 'pdf-it Style Guide',
+    name: 'pdf-it-safe Style Guide',
     description:
-      'Typography, color palette, and layout rules pdf-it follows. Useful when an agent decides how to structure markdown for best PDF output.',
+      'Typography, color palette, layout rules, and local hardening rules pdf-it-safe follows. Useful when an agent decides how to structure markdown for best PDF output.',
     mimeType: 'text/markdown',
   },
   {
     uri: 'pdf-it://markdown-cheatsheet',
-    name: 'Markdown Cheatsheet for pdf-it',
+    name: 'Markdown Cheatsheet for pdf-it-safe',
     description:
-      'Quick reference of which markdown elements pdf-it supports and how each renders. Use this when an agent is unsure whether a feature will render correctly.',
+      'Quick reference of which markdown elements pdf-it-safe supports and how each renders. Use this when an agent is unsure whether a feature will render correctly.',
     mimeType: 'text/markdown',
   },
 ];
@@ -84,7 +84,7 @@ Every body page has a footer with the document title (left) and the page number 
 
 ## Tips
 
-- Pull quotes (markdown blockquotes) render as italic Newsreader with a hairline rule on the left. Use sparingly. One per spread is enough.
+- Pull quotes (markdown blockquotes) render as italic system serif with a hairline rule on the left. Use sparingly. One per spread is enough.
 - Tables render with hairline borders. They handle 4+ columns cleanly. Avoid tables wider than 6 columns.
 - Code blocks have a subtle gray background, no syntax highlighting, and respect page breaks. Long code blocks (30+ lines) may split across pages.
 `,
@@ -125,12 +125,21 @@ No cover, no TOC. The markdown renders directly as body content with the same ty
     return {
       uri,
       mimeType: 'text/markdown',
-      text: `# pdf-it Style Guide
+      text: `# pdf-it-safe Style Guide
+
+## Security profile
+
+- Raw HTML in markdown is escaped, not rendered.
+- JavaScript is disabled while Chrome renders the PDF.
+- External browser requests are blocked during rendering.
+- Fonts are local/system fonts only.
+- Output paths must stay inside ~/Documents/pdf-it/.
 
 ## Typography
 
-- Body and primary headings: Inter
-- Code: JetBrains Mono
+- Body and primary headings: system serif stack
+- Section headings: system sans stack
+- Code: system monospace stack
 - Page numbers and footer: Helvetica (embedded by pdf-lib)
 
 ## Color palette
@@ -173,7 +182,7 @@ No accent colors. No syntax highlighting in code blocks. Restraint compounds.
     return {
       uri,
       mimeType: 'text/markdown',
-      text: `# Markdown Cheatsheet for pdf-it
+      text: `# Markdown Cheatsheet for pdf-it-safe
 
 ## Headings
 
@@ -185,8 +194,8 @@ No accent colors. No syntax highlighting in code blocks. Restraint compounds.
 ## Inline
 
 - **bold** → font-weight 600
-- *italic* → italic Inter
-- \`inline code\` → JetBrains Mono with light gray background
+- *italic* → italic text
+- \`inline code\` → monospace with light gray background
 - [link](url) → underlined, inherits text color
 
 ## Block

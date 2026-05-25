@@ -4,7 +4,7 @@ import { escapeHtml, slugify } from './utils.js';
 
 export function parseMarkdown(content: string): { html: string; toc: TocEntry[] } {
   const md = new MarkdownIt({
-    html: true,
+    html: false,
     linkify: true,
     typographer: true,
   });

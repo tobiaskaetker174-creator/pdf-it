@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { mkdtempSync, statSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, mkdtempSync, statSync, readFileSync, rmSync, unlinkSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 
 const PASS = "\x1b[32m✓\x1b[0m";
@@ -46,7 +46,9 @@ one page when rendered with the research-report template.
 `;
 
 const tmpDir = mkdtempSync(path.join(tmpdir(), "pdf-it-test-"));
-const outputPath = path.join(tmpDir, "output.pdf");
+const allowedOutputDir = path.join(homedir(), "Documents", "pdf-it");
+mkdirSync(allowedOutputDir, { recursive: true });
+const outputPath = path.join(allowedOutputDir, `pdf-it-safe-test-${Date.now()}.pdf`);
 console.log(`${INFO} Output path: ${outputPath}`);
 
 const transport = new StdioClientTransport({
@@ -95,6 +97,34 @@ try {
   check("list_templates mentions research-report", /research-report/.test(tmplText));
   check("list_templates mentions plain", /plain/.test(tmplText));
 
+  console.log(`${INFO} Rejecting output outside ~/Documents/pdf-it`);
+  const blockedPathResult = await client.callTool({
+    name: "generate_pdf",
+    arguments: {
+      content: "# Blocked path test\n\nThis should not be written.",
+      title: "blocked path test",
+      template: "plain",
+      output_path: path.join(tmpDir, "outside.pdf"),
+    },
+  });
+  check("outside output_path is rejected", !!blockedPathResult.isError);
+  const blockedPathText = blockedPathResult.content.map((c) => c.text ?? "").join("\n");
+  check("outside output_path explains directory restriction", /stay inside/.test(blockedPathText));
+
+  console.log(`${INFO} Rejecting non-PDF output extension`);
+  const blockedExtensionResult = await client.callTool({
+    name: "generate_pdf",
+    arguments: {
+      content: "# Blocked extension test\n\nThis should not be written.",
+      title: "blocked extension test",
+      template: "plain",
+      output_path: path.join(allowedOutputDir, "blocked-extension.txt"),
+    },
+  });
+  check("non-pdf output_path is rejected", !!blockedExtensionResult.isError);
+  const blockedExtensionText = blockedExtensionResult.content.map((c) => c.text ?? "").join("\n");
+  check("non-pdf output_path explains extension restriction", /end with \.pdf/.test(blockedExtensionText));
+
   console.log(`${INFO} Generating PDF (research-report template)`);
   const result = await client.callTool({
     name: "generate_pdf",
@@ -127,6 +157,34 @@ try {
     check("file starts with %PDF- magic bytes", head.startsWith("%PDF-"), `header=${JSON.stringify(head)}`);
   }
 
+  console.log(`${INFO} Rendering hostile markdown without executing/fetching`);
+  const hostileOutputPath = path.join(allowedOutputDir, `pdf-it-safe-hostile-${Date.now()}.pdf`);
+  const hostileResult = await client.callTool({
+    name: "generate_pdf",
+    arguments: {
+      content: `# Hostile Markdown Test
+
+<script>throw new Error("raw html should not execute")</script>
+
+![remote image](https://example.com/blocked.png)
+`,
+      title: "hostile markdown test",
+      template: "plain",
+      output_path: hostileOutputPath,
+    },
+  });
+  check("hostile markdown render did not error", !hostileResult.isError);
+  try {
+    const hostileStat = statSync(hostileOutputPath);
+    check("hostile markdown PDF written", hostileStat.size > 5_000, `${hostileStat.size} bytes`);
+  } catch (e) {
+    check("hostile markdown PDF written", false, e.message);
+  } finally {
+    try {
+      unlinkSync(hostileOutputPath);
+    } catch {}
+  }
+
   console.log(`${INFO} Closing client`);
   await client.close();
 } catch (err) {
@@ -135,6 +193,9 @@ try {
 } finally {
   try {
     rmSync(tmpDir, { recursive: true, force: true });
+  } catch {}
+  try {
+    unlinkSync(outputPath);
   } catch {}
 }
 

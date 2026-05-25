@@ -2,17 +2,15 @@
  * Shared base CSS used by every template.
  *
  * Design system: refined editorial restraint.
- * - Newsreader (serif) for body and primary headings (carries the editorial weight)
- * - DM Sans for sub-headings (keeps hierarchy crisp without ornament)
- * - JetBrains Mono for code, page numbers, metadata
+ * - System serif for body and primary headings (no remote font fetch)
+ * - System sans for sub-headings (keeps hierarchy crisp without ornament)
+ * - System monospace for code, page numbers, metadata
  * - Pure white paper, near-black ink, neutral grays (no warm tint)
  * - No accent colors (restraint ages forever)
  * - No syntax highlighting in code blocks (color in PDFs ages badly)
  * - Generous line-height and breathing room
  */
 export const baseCss = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,ital,wght@6..72,0,300;6..72,0,400;6..72,0,500;6..72,1,400&display=swap');
-
   :root {
     --paper: #FFFFFF;
     --paper-2: #F4F4F4;
@@ -27,7 +25,7 @@ export const baseCss = `
   html, body { background: var(--paper); }
 
   html {
-    font-family: 'Newsreader', 'Iowan Old Style', 'Charter', Georgia, serif;
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
     font-size: 11pt;
     color: var(--ink);
     line-height: 1.55;
@@ -39,7 +37,7 @@ export const baseCss = `
 
   /* ── Headings ───────────────────────────────────────────── */
   h1 {
-    font-family: 'Newsreader', 'Iowan Old Style', 'Charter', Georgia, serif;
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
     font-size: 26pt;
     font-weight: 400;
     line-height: 1.2;
@@ -54,7 +52,7 @@ export const baseCss = `
   h1:first-child { margin-top: 0; }
 
   h2 {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
     font-size: 17pt;
     font-weight: 500;
     line-height: 1.3;
@@ -66,7 +64,7 @@ export const baseCss = `
   }
 
   h3 {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
     font-size: 13pt;
     font-weight: 500;
     line-height: 1.4;
@@ -77,7 +75,7 @@ export const baseCss = `
   }
 
   h4, h5, h6 {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
     font-size: 10pt;
     font-weight: 500;
     color: var(--ink-2);
@@ -105,7 +103,7 @@ export const baseCss = `
 
   /* ── Code ───────────────────────────────────────────────── */
   code {
-    font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+    font-family: Consolas, 'SF Mono', Menlo, monospace;
     font-size: 9.5pt;
     background: var(--paper-2);
     border-radius: 2px;
@@ -142,7 +140,7 @@ export const baseCss = `
     width: 100%;
     border-collapse: collapse;
     margin: 18px 0 22px;
-    font-family: 'DM Sans', -apple-system, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
     font-size: 10pt;
   }
 
@@ -170,7 +168,7 @@ export const baseCss = `
 
   /* ── Blockquote (pull quote) ────────────────────────────── */
   blockquote {
-    font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
     font-style: italic;
     font-size: 12pt;
     line-height: 1.5;
@@ -213,7 +211,7 @@ export const baseCss = `
   }
 
   figcaption {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Consolas, 'SF Mono', Menlo, monospace;
     font-size: 9pt;
     color: var(--muted);
     letter-spacing: 0.02em;

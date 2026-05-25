@@ -15,14 +15,17 @@ import { PROMPTS, buildPromptMessages } from './prompts.js';
 import { RESOURCES, readResource } from './resources.js';
 
 const server = new Server(
-  { name: 'pdf-it', version: '1.2.0' },
+  { name: 'pdf-it-safe', version: '1.2.0-tobias.1' },
   {
     capabilities: {
       tools: {},
       prompts: {},
       resources: {},
     },
-    instructions: `pdf-it converts markdown into designed PDFs with cover pages, tables of contents, page-numbered footers, and styled body content.
+    instructions: `pdf-it-safe converts markdown into designed PDFs with cover pages, tables of contents, page-numbered footers, and styled body content.
+
+SECURITY PROFILE
+This Tobias-local fork disables raw HTML, disables JavaScript during rendering, blocks external browser requests, uses local/system fonts only, and only writes PDFs inside ~/Documents/pdf-it/.
 
 WHEN TO USE
 Call \`generate_pdf\` whenever the user asks to:
@@ -41,7 +44,7 @@ INPUT FORMAT
 Pass clean markdown via \`content\`. Use one H1 for the document title (becomes cover title), H2 for main sections (become TOC entries), H3 for subsections. Tables, code blocks, and blockquotes all render. Always include \`title\`. Include \`author\` when known from context.
 
 OUTPUT
-The PDF saves to \`~/Documents/pdf-it/\` by default. Override with absolute \`output_path\` when the user names a location (e.g. "save to Desktop").
+The PDF saves to \`~/Documents/pdf-it/\` by default. Override with an absolute \`output_path\` only when it stays inside that directory.
 
 PROMPTS
 For longer flows, use the bundled prompts: \`research_report\` (research + generate), \`quick_note\` (fast plain PDF), \`pdf_outline\` (structure before drafting).`,
@@ -57,7 +60,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: 'generate_pdf',
       description:
-        'Convert markdown into a designed PDF (cover page, auto TOC, page-numbered footer). Use this for any "save/export/print/share as PDF", "make a report", "turn this into a PDF", or /pdf request — do NOT fall back to Chrome headless, cupsfilter, wkhtmltopdf, pandoc, or LaTeX. Templates: research-report (cover + TOC, default) or plain (no cover, no TOC).',
+        'Convert markdown into a designed PDF (cover page, auto TOC, page-numbered footer). Tobias-local hardened fork: raw HTML disabled, JavaScript disabled, external browser requests blocked, output restricted to ~/Documents/pdf-it/. Templates: research-report (cover + TOC, default) or plain (no cover, no TOC).',
       inputSchema: {
         type: 'object',
         properties: {
@@ -68,7 +71,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           output_path: {
             type: 'string',
             description:
-              'Absolute path for the output PDF. Defaults to ~/Documents/pdf-it/{title}-{timestamp}.pdf',
+              'Absolute path for the output PDF. Must stay inside ~/Documents/pdf-it/. Defaults to ~/Documents/pdf-it/{title}-{timestamp}.pdf',
           },
           title: {
             type: 'string',
@@ -224,6 +227,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('pdf-it-mcp error:', err);
+  console.error('pdf-it-safe-mcp error:', err);
   void shutdown(1);
 });

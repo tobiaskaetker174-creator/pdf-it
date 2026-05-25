@@ -26,7 +26,7 @@ const coverCss = `
   }
 
   .cover-title {
-    font-family: 'Newsreader', 'Iowan Old Style', 'Charter', Georgia, serif;
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
     font-size: 48pt;
     font-weight: 300;
     line-height: 1.05;
@@ -50,7 +50,7 @@ const coverCss = `
   }
 
   .cover-meta {
-    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-family: Consolas, 'SF Mono', Menlo, monospace;
     font-size: 10pt;
     letter-spacing: 0.03em;
     line-height: 1.7;
@@ -74,7 +74,7 @@ const coverCss = `
   }
 
   .toc-heading {
-    font-family: 'DM Sans', -apple-system, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
     font-size: 10pt;
     font-weight: 500;
     letter-spacing: 0.12em;
@@ -99,7 +99,7 @@ const coverCss = `
   }
 
   .toc-item a {
-    font-family: 'Newsreader', serif;
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
     font-size: 11pt;
     font-weight: 400;
     color: var(--ink);
